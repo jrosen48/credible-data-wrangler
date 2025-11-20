@@ -1,0 +1,8 @@
+"Student_Name","Group","Treatment","Week.1.Height..cm.","Week.2.Height..cm.","Week_3_Height_cm","Week_4_Height_cm","Final_Leaf_Count","Notes","Date_Started"
+"Alex","A","Sunlight",2.5,4.1,6.8,9.5,"12","Healthy","9/1/2024"
+"Bailey","A","sunlight",2.3,3.9,6.2,8.9,"11","Slight yellowing","09-01-2024"
+"Casey ","B","Partial Shade",2.4,3.2,4.5,6.1,"8","","9/1/24"
+"Drew","B","partial shade",2.6,3.5,4.9,6.8,"9","Very healthy!","Sept 1 2024"
+"emerson","C","Full Shade",2.2,2.8,3.5,4.2,"6","slow growth","9/1/2024"
+"Finley","C","full shade",2.4,2.9,3.7,4.6,"six",NA,"9/1/2024"
+"Alex","A","Sunlight",NA,3.8,6.5,9.2,"12","Healthy","9/1/2024"

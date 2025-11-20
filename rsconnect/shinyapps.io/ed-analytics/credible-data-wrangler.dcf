@@ -1,0 +1,12 @@
+name: credible-data-wrangler
+title: credible-data-wrangler
+username: ed-analytics
+account: ed-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15699264
+bundleId: 11009459
+url: https://ed-analytics.shinyapps.io/credible-data-wrangler/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
