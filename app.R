@@ -15,6 +15,9 @@ library(skimr)      # for better data summaries
 # Set this in your .Renviron file or Shiny server settings
 CLAUDE_API_KEY <- Sys.getenv("CLAUDE_API_KEY")
 
+# Add resource path for logo
+addResourcePath("images", ".")
+
 # UI Definition
 ui <- fluidPage(
   titlePanel("CREDIBLE Data Wrangler"),
@@ -375,7 +378,15 @@ ui <- fluidPage(
       actionButton("send_to_codap", "Send to CODAP",
                    class = "btn-primary",
                    style = "width: 100%;",
-                   icon = icon("share"))
+                   icon = icon("share")),
+
+      # Logo footer
+      div(style = "text-align: center; padding: 20px 0 10px 0; margin-top: 20px;",
+          tags$img(src = "images/credible-logo.png", height = "80px",
+                   style = "display: block; margin: 0 auto 8px auto; mix-blend-mode: multiply;"),
+          tags$a(href = "https://projectcredible.com", target = "_blank",
+                 style = "font-size: 12px; color: #3B7A8C;", "projectcredible.com")
+      )
     ),
     
     mainPanel(
