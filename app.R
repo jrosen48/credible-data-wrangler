@@ -21,111 +21,332 @@ ui <- fluidPage(
   
   tags$head(
     tags$style(HTML("
-      /* Main theme colors */
+      /* Still Water palette — cohesive teal color family
+         Primary:   #3B7A8C  (lake teal)
+         Dark:      #2A5F70  (deep water, hovers)
+         Muted:     #6A9AA6  (secondary elements)
+         Accent:    #4A9BAA  (highlights)
+      */
+
+      /* Main theme */
       body {
-        background-color: #f5f7fa;
+        background-color: #f8f9fa;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
-      .navbar { background-color: #2c3e50; }
-      h3, h4, h5 { color: #2c3e50; }
+      h3, h4, h5 { color: #2A5F70; }
 
       /* Chat container */
       .chat-container {
-        height: 600px; overflow-y: auto; border: 2px solid #3498db;
-        border-radius: 10px; padding: 15px; margin-bottom: 10px;
-        background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 500px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       }
 
       /* Chat messages */
       .user-message {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white; padding: 10px 15px; margin: 8px 0;
-        border-radius: 15px 15px 5px 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: #3B7A8C;
+        color: white;
+        padding: 10px 15px;
+        margin: 8px 0;
+        border-radius: 12px 12px 4px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
       .assistant-message {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white; padding: 10px 15px; margin: 8px 0;
-        border-radius: 15px 15px 15px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: #f8f9fa;
+        color: #333;
+        padding: 10px 15px;
+        margin: 8px 0;
+        border-radius: 12px 12px 12px 4px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       }
 
       /* Data preview section */
       .data-preview {
-        margin: 20px 0; background-color: white; padding: 15px;
-        border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        background-color: white;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       }
 
       /* Step indicator */
       .step-indicator {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white; padding: 12px; border-radius: 8px; margin: 10px 0;
-        font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: #3B7A8C;
+        color: white;
+        padding: 12px;
+        border-radius: 6px;
+        margin: 10px 0;
+        font-weight: 600;
       }
 
       /* Sidebar styling */
       .well {
-        background-color: #ffffff; border: none; border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       }
 
       /* Button styling */
       .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none; border-radius: 8px; padding: 10px 10px;
-        font-weight: bold; transition: transform 0.2s;
+        background-color: #3B7A8C !important;
+        border-color: #2A5F70 !important;
+        border-radius: 5px;
+        padding: 10px 16px;
+        font-weight: 500;
+        transition: background-color 0.2s;
       }
-      .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      .btn-primary:hover, .btn-primary:focus {
+        background-color: #2A5F70 !important;
+        border-color: #1F4A58 !important;
       }
 
       /* Input styling */
       .form-control {
-        border: 2px solid #e0e0e0; border-radius: 8px; transition: border-color 0.3s;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        transition: border-color 0.2s;
       }
       .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #3B7A8C;
+        box-shadow: 0 0 0 0.2rem rgba(59, 122, 140, 0.25);
       }
 
       /* Tab styling */
-      .nav-tabs > li > a { color: #2c3e50; border-radius: 8px 8px 0 0; }
-      .nav-tabs > li.active > a { background-color: #667eea; color: white; font-weight: bold; }
+      .nav-tabs > li > a {
+        color: #495057;
+        border-radius: 5px 5px 0 0;
+        font-weight: 500;
+      }
+      .nav-tabs > li > a:hover {
+        background-color: #e9ecef;
+      }
+      .nav-tabs > li.active > a,
+      .nav-tabs > li.active > a:hover,
+      .nav-tabs > li.active > a:focus {
+        background-color: #3B7A8C;
+        color: white;
+        font-weight: 600;
+        border-color: #3B7A8C;
+      }
 
       /* Step history cards */
       .step-card {
-        border: 2px solid #e0e0e0; padding: 15px; margin: 15px 0;
-        border-radius: 10px; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 6px;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        border-left: 4px solid #3B7A8C;
       }
-      .step-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
 
       /* Status text */
-      pre { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px; }
-      
+      pre {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #4A9BAA;
+        border-radius: 4px;
+        padding: 12px;
+        font-family: monospace;
+      }
+
       /* Prompt suggestions */
       .prompt-suggestion {
         display: inline-block;
-        background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%);
-        color: #4c1d95;
+        background-color: #e9ecef;
+        color: #2A5F70;
         padding: 6px 12px;
         margin: 4px;
         border-radius: 15px;
-        border: 1px solid #c4b5fd;
+        border: 1px solid #dee2e6;
         font-size: 13px;
         cursor: pointer;
         transition: all 0.2s;
+        text-decoration: none;
       }
       .prompt-suggestion:hover {
-        background: linear-gradient(135deg, #c7d2fe 0%, #ddd6fe 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        background-color: #6A9AA6;
+        color: white;
+        border-color: #6A9AA6;
       }
       .suggestions-label {
         font-size: 12px;
-        color: #6b7280;
+        color: #6c757d;
         font-style: italic;
         margin-bottom: 5px;
       }
+
+      /* Links */
+      a { color: #3B7A8C; }
+      a:hover { color: #2A5F70; }
+
+      /* Title */
+      .title-panel h2 {
+        color: #2A5F70;
+        font-weight: 600;
+      }
+    ")),
+    # CODAP Integration: IFramePhone library for communication
+    tags$script(src="https://unpkg.com/iframe-phone@1.4.0/dist/iframe-phone.js"),
+    tags$script(HTML("
+      // Initialize CODAP connection using IFramePhone
+      var codapPhone = null;
+      var codapConnectionInitialized = false;
+
+      function initCodapConnection() {
+        if (codapConnectionInitialized) return;
+
+        try {
+          console.log('Initializing CODAP connection with IFramePhone...');
+
+          // Check if IFramePhone is available
+          if (typeof iframePhone === 'undefined') {
+            console.error('IFramePhone library not loaded');
+            return;
+          }
+
+          // Create phone connection to CODAP
+          codapPhone = new iframePhone.IframePhoneRpcEndpoint(
+            function(command, callback) {
+              // Handler for messages FROM CODAP (we don't expect any in this simple case)
+              console.log('Received message from CODAP:', command);
+              if (callback) callback({success: true});
+            },
+            'data-interactive',
+            window.parent
+          );
+
+          codapConnectionInitialized = true;
+          console.log('CODAP connection established successfully');
+        } catch (e) {
+          console.error('Error initializing CODAP connection:', e);
+        }
+      }
+
+      // Call init when page loads
+      window.addEventListener('load', function() {
+        initCodapConnection();
+      });
+
+      // CODAP Interface Helper Function
+      // This function sends messages to CODAP using the Data Interactive Plugin API via IFramePhone
+      function codapInterface(action, resource, values) {
+        return new Promise(function(resolve, reject) {
+          // Check if running inside CODAP (has a parent frame different from self)
+          if (window === window.parent) {
+            console.warn('Not running inside CODAP - no parent frame detected');
+            reject({
+              error: 'Not running in CODAP',
+              message: 'This app must be embedded in CODAP to use the Send to CODAP feature. Please open CODAP at codap.concord.org and add this app as a Data Interactive plugin.',
+              helpUrl: 'https://codap.concord.org/'
+            });
+            return;
+          }
+
+          // Initialize connection if not already done
+          if (!codapConnectionInitialized) {
+            initCodapConnection();
+          }
+
+          // Check if phone is available
+          if (!codapPhone) {
+            reject({
+              error: 'CODAP connection not established',
+              message: 'Unable to establish connection with CODAP. Make sure you are using the latest CODAP version.',
+              helpUrl: 'https://codap.concord.org/'
+            });
+            return;
+          }
+
+          var message = {
+            action: action,
+            resource: resource,
+            values: values
+          };
+
+          console.log('Sending to CODAP via IFramePhone:', message);
+
+          // Send via IFramePhone
+          codapPhone.call(message, function(response) {
+            console.log('CODAP Response:', response);
+            if (response && response.success) {
+              resolve(response);
+            } else {
+              reject(response || {error: 'Unknown error', message: 'CODAP returned an error'});
+            }
+          });
+        });
+      }
+
+      // Custom Shiny Message Handler: sendToCODAP
+      // This receives data from R/Shiny and sends it to CODAP
+      Shiny.addCustomMessageHandler('sendToCODAP', function(payload) {
+        console.log('Received sendToCODAP message from Shiny:', payload);
+        console.log('Current window location:', window.location.href);
+        console.log('Parent window exists:', window.parent !== window);
+
+        var datasetName = payload.datasetName || 'MyData';
+        var attributes = payload.attributes || [];
+        var cases = payload.cases || [];
+
+        console.log('Dataset name:', datasetName);
+        console.log('Number of attributes:', attributes.length);
+        console.log('Number of cases:', cases.length);
+
+        // Step 1: Create CODAP dataContext with attributes
+        codapInterface('create', 'dataContext', {
+          name: datasetName,
+          title: datasetName,
+          description: 'Data exported from CREDIBLE Data Wrangler Shiny App',
+          collections: [{
+            name: datasetName + '_collection',
+            title: datasetName,
+            attrs: attributes
+          }]
+        })
+        .then(function(response) {
+          console.log('DataContext created successfully:', response);
+
+          // Step 2: Send data rows as cases to CODAP
+          return codapInterface('create', 'dataContext[' + datasetName + '].item', cases);
+        })
+        .then(function(response) {
+          console.log('Cases sent successfully:', response);
+          console.log('Total cases sent:', cases.length);
+
+          // Notify Shiny of success
+          Shiny.setInputValue('codap_export_status', {
+            success: true,
+            message: 'Successfully sent ' + cases.length + ' rows to CODAP dataset: ' + datasetName,
+            timestamp: new Date().getTime()
+          }, {priority: 'event'});
+        })
+        .catch(function(error) {
+          console.error('Error sending data to CODAP:', error);
+
+          // Create helpful error message
+          var errorMsg = error.message || error.error || 'Unknown error';
+          if (error.helpUrl) {
+            errorMsg += ' Visit: ' + error.helpUrl;
+          }
+
+          // Notify Shiny of error
+          Shiny.setInputValue('codap_export_status', {
+            success: false,
+            message: errorMsg,
+            timestamp: new Date().getTime()
+          }, {priority: 'event'});
+        });
+      });
+
+      console.log('CODAP interface initialized');
     "))
   ),
   
@@ -147,7 +368,14 @@ ui <- fluidPage(
       h4("Current Status"),
       verbatimTextOutput("status_text"),
       hr(),
-      downloadButton("download_data", "Download Cleaned Data", class = "btn-primary")
+      downloadButton("download_data", "Download Cleaned Data", class = "btn-primary"),
+      hr(),
+      h4("CODAP Integration"),
+      textInput("codap_dataset_name", "Dataset Name:", value = "WrangledData"),
+      actionButton("send_to_codap", "Send to CODAP",
+                   class = "btn-primary",
+                   style = "width: 100%;",
+                   icon = icon("share"))
     ),
     
     mainPanel(
@@ -569,12 +797,84 @@ server <- function(input, output, session) {
       "Remove rows with missing data",
       "Create a new calculated column"
     )
-    
+
     lapply(seq_along(suggestions), function(i) {
       observeEvent(input[[paste0("suggestion_", i)]], {
         updateTextInput(session, "user_input", value = suggestions[[i]])
       })
     })
+  })
+
+  # CODAP Integration: Handle Send to CODAP button
+  observeEvent(input$send_to_codap, {
+    # Get current data
+    data <- rv$current_data
+
+    # Validate data exists
+    if (is.null(data) || nrow(data) == 0) {
+      showNotification("No data available to send to CODAP. Please load data first.", type = "error")
+      return()
+    }
+
+    # Get dataset name (with fallback)
+    dataset_name <- input$codap_dataset_name
+    if (is.null(dataset_name) || dataset_name == "") {
+      dataset_name <- "WrangledData"
+    }
+
+    # Show initial notification
+    showNotification(
+      paste0("Sending ", nrow(data), " rows to CODAP as dataset: ", dataset_name),
+      type = "message",
+      duration = 3
+    )
+
+    # Convert columns to CODAP attributes format
+    attributes <- lapply(names(data), function(col_name) {
+      list(name = col_name, title = col_name)
+    })
+
+    # Convert rows to CODAP cases format
+    cases <- lapply(seq_len(nrow(data)), function(i) {
+      row_data <- as.list(data[i, ])
+      # Critical: Convert NA to NULL for JSON serialization
+      row_data <- lapply(row_data, function(x) {
+        if (is.na(x)) return(NULL) else return(x)
+      })
+      return(row_data)
+    })
+
+    # Send to JavaScript via custom message handler
+    session$sendCustomMessage(
+      type = "sendToCODAP",
+      message = list(
+        datasetName = dataset_name,
+        attributes = attributes,
+        cases = cases
+      )
+    )
+  })
+
+  # CODAP Integration: Handle export status feedback from JavaScript
+  observeEvent(input$codap_export_status, {
+    status <- input$codap_export_status
+    if (!is.null(status) && !is.null(status$success)) {
+      if (status$success) {
+        showNotification(status$message, type = "message", duration = 5)
+      } else {
+        showNotification(
+          HTML(paste0(
+            "CODAP Export Error: ", status$message,
+            "<br><br><strong>Tip:</strong> Make sure this app is embedded in CODAP as a Data Interactive plugin. ",
+            "To do this, open CODAP at codap.concord.org, then drag a 'Data Interactive' plugin from the plugin menu ",
+            "and enter this app's URL.",
+            "<br><br>Alternatively, use the 'Download Cleaned Data' button to export as CSV."
+          )),
+          type = "error",
+          duration = 15
+        )
+      }
+    }
   })
 }
 
