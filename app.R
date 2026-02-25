@@ -362,11 +362,11 @@ ui <- fluidPage(
       fileInput("data_file", "Upload Data File",
                 accept = c(".csv", ".xlsx", ".tsv", ".txt")),
       
-      # Example dataset button
-      actionButton("load_example", "Or Try Example Dataset", 
-                   class = "btn-primary", 
-                   style = "width: 100%; margin-top: 10px;"),
-      
+      # Example dataset button (archived for now)
+      # actionButton("load_example", "Or Try Example Dataset",
+      #              class = "btn-primary",
+      #              style = "width: 100%; margin-top: 10px;"),
+
       hr(),
       h4("Current Status"),
       verbatimTextOutput("status_text"),
@@ -509,38 +509,38 @@ server <- function(input, output, session) {
     })
   })
   
-  # Load example dataset
-  observeEvent(input$load_example, {
-    tryCatch({
-      rv$original_data <- readr::read_csv("plant_growth_experiment.csv", show_col_types = FALSE)
-      rv$current_data <- rv$original_data
-      rv$current_step <- "Example data loaded"
-      rv$chat_history <- list(
-        list(role = "assistant", 
-             content = paste0("Perfect! I've loaded the **Plant Growth Experiment** example dataset. ",
-                              "This data tracks plant growth over 4 weeks for different treatment groups (Sunlight, Partial Shade, Full Shade).\n\n",
-                              "The dataset has ", nrow(rv$current_data), " rows and ",
-                              ncol(rv$current_data), " columns, including:\n",
-                              "- Student names and groups\n",
-                              "- Weekly height measurements\n",
-                              "- Final leaf counts\n",
-                              "- Treatment types\n\n",
-                              "**Notice**: This is a messy dataset with typical issues like inconsistent formatting, ",
-                              "different date formats, and missing values - perfect for learning data wrangling!\n\n",
-                              "What would you like to do with it? For example, you could ask me to:\n",
-                              "- Convert the weekly measurements to long format\n",
-                              "- Clean up the inconsistent treatment names\n",
-                              "- Summarize growth by treatment group"))
-      )
-      # Reset conversation history and step history
-      rv$conversation_history <- list()
-      rv$step_history <- list()
-      rv$awaiting_confirmation <- FALSE
-      rv$pending_code <- NULL
-    }, error = function(e) {
-      showNotification(paste("Error loading example data:", e$message), type = "error")
-    })
-  })
+  # Load example dataset (archived for now)
+  # observeEvent(input$load_example, {
+  #   tryCatch({
+  #     rv$original_data <- readr::read_csv("plant_growth_experiment.csv", show_col_types = FALSE)
+  #     rv$current_data <- rv$original_data
+  #     rv$current_step <- "Example data loaded"
+  #     rv$chat_history <- list(
+  #       list(role = "assistant",
+  #            content = paste0("Perfect! I've loaded the **Plant Growth Experiment** example dataset. ",
+  #                             "This data tracks plant growth over 4 weeks for different treatment groups (Sunlight, Partial Shade, Full Shade).\n\n",
+  #                             "The dataset has ", nrow(rv$current_data), " rows and ",
+  #                             ncol(rv$current_data), " columns, including:\n",
+  #                             "- Student names and groups\n",
+  #                             "- Weekly height measurements\n",
+  #                             "- Final leaf counts\n",
+  #                             "- Treatment types\n\n",
+  #                             "**Notice**: This is a messy dataset with typical issues like inconsistent formatting, ",
+  #                             "different date formats, and missing values - perfect for learning data wrangling!\n\n",
+  #                             "What would you like to do with it? For example, you could ask me to:\n",
+  #                             "- Convert the weekly measurements to long format\n",
+  #                             "- Clean up the inconsistent treatment names\n",
+  #                             "- Summarize growth by treatment group"))
+  #     )
+  #     # Reset conversation history and step history
+  #     rv$conversation_history <- list()
+  #     rv$step_history <- list()
+  #     rv$awaiting_confirmation <- FALSE
+  #     rv$pending_code <- NULL
+  #   }, error = function(e) {
+  #     showNotification(paste("Error loading example data:", e$message), type = "error")
+  #   })
+  # })
   
   # Function to call Claude API (env-only key)
   call_claude <- function(user_message) {
