@@ -9,7 +9,6 @@ library(jsonlite)
 library(readxl)     # ensure readxl is available for .xlsx
 library(stringr)    # robust regex for code extraction
 library(markdown)   # for rendering markdown in chat
-library(skimr)      # for better data summaries
 
 # Get API key from environment variable (for deployment)
 # Set this in your .Renviron file or Shiny server settings
@@ -78,16 +77,6 @@ ui <- fluidPage(
         box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       }
 
-      /* Step indicator */
-      .step-indicator {
-        background-color: #3B7A8C;
-        color: white;
-        padding: 12px;
-        border-radius: 6px;
-        margin: 10px 0;
-        font-weight: 600;
-      }
-
       /* Sidebar styling */
       .well {
         background-color: #ffffff;
@@ -119,24 +108,6 @@ ui <- fluidPage(
       .form-control:focus {
         border-color: #3B7A8C;
         box-shadow: 0 0 0 0.2rem rgba(59, 122, 140, 0.25);
-      }
-
-      /* Tab styling */
-      .nav-tabs > li > a {
-        color: #495057;
-        border-radius: 5px 5px 0 0;
-        font-weight: 500;
-      }
-      .nav-tabs > li > a:hover {
-        background-color: #e9ecef;
-      }
-      .nav-tabs > li.active > a,
-      .nav-tabs > li.active > a:hover,
-      .nav-tabs > li.active > a:focus {
-        background-color: #3B7A8C;
-        color: white;
-        font-weight: 600;
-        border-color: #3B7A8C;
       }
 
       /* Step history cards */
@@ -431,45 +402,36 @@ ui <- fluidPage(
       fileInput("data_file", "Upload Data File",
                 accept = c(".csv", ".xlsx", ".tsv", ".txt")),
 
-      # CODAP Import Section
-      div(style = "background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;",
-          div(style = "display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;",
-              span(style = "font-size: 13px; color: #495057;", "Or import from CODAP:"),
-              actionButton("refresh_codap_datasets", NULL,
-                           icon = icon("sync"),
-                           class = "btn-sm",
-                           style = "padding: 2px 8px; font-size: 11px;",
-                           title = "Refresh dataset list")
-          ),
-          selectInput("codap_dataset_select", NULL,
-                      choices = c("(Click refresh to load)" = ""),
-                      width = "100%"),
-          actionButton("import_from_codap", "Import Selected",
-                       class = "btn-primary",
-                       style = "width: 100%; font-size: 13px;",
-                       icon = icon("download"))
-      ),
-
-      # Example dataset button (archived for now)
-      # actionButton("load_example", "Or Try Example Dataset",
-      #              class = "btn-primary",
-      #              style = "width: 100%; margin-top: 10px;"),
-
-      hr(),
-      h4("Current Status"),
-      verbatimTextOutput("status_text"),
       hr(),
       downloadButton("download_data", "Download Cleaned Data", class = "btn-primary"),
-      # Advanced section (collapsible)
+
+      # Advanced section (collapsible) - CODAP integration
       tags$details(
         style = "margin-top: 15px;",
-        tags$summary(style = "cursor: pointer; color: #6c757d; font-size: 13px;", "Advanced Options"),
+        tags$summary(style = "cursor: pointer; color: #6c757d; font-size: 13px;", "CODAP Integration"),
         div(style = "padding: 10px 0;",
-          h5("CODAP Integration", style = "font-size: 14px; margin-top: 10px;"),
+          # Import from CODAP
+          h5("Import from CODAP", style = "font-size: 13px; margin-top: 5px;"),
+          div(style = "display: flex; align-items: center; gap: 5px; margin-bottom: 8px;",
+              actionButton("refresh_codap_datasets", "Refresh",
+                           icon = icon("sync"),
+                           class = "btn-sm",
+                           style = "font-size: 11px;")
+          ),
+          selectInput("codap_dataset_select", NULL,
+                      choices = c("(Click refresh)" = ""),
+                      width = "100%"),
+          actionButton("import_from_codap", "Import",
+                       class = "btn-primary",
+                       style = "width: 100%; font-size: 12px;",
+                       icon = icon("download")),
+          hr(),
+          # Export to CODAP
+          h5("Export to CODAP", style = "font-size: 13px;"),
           textInput("codap_dataset_name", "Dataset Name:", value = "WrangledData"),
           actionButton("send_to_codap", "Send to CODAP",
                        class = "btn-primary",
-                       style = "width: 100%; font-size: 13px;",
+                       style = "width: 100%; font-size: 12px;",
                        icon = icon("share"))
         )
       ),
@@ -485,66 +447,36 @@ ui <- fluidPage(
     
     mainPanel(
       width = 9,
-      tabsetPanel(
-        id = "main_tabs",
-        tabPanel(
-          "Work Space",
-          h3("Let's Prepare Your Data!"),
-          p("Upload your data file and tell me what you'd like to do with it. 
-            I'll help you clean and prepare it step by step."),
-          # Chat section
-          div(class = "chat-container", id = "chat_box", uiOutput("chat_display")),
-          fluidRow(
-            column(10, textAreaInput("user_input", NULL, placeholder = "Type your message here...", width = "100%", rows = 2, resize = "vertical")),
-            column(2, actionButton("send_btn", "Send", class = "btn-primary", width = "100%"))
-          ),
-          div(style = "margin-top: 10px;",
-              uiOutput("prompt_suggestions")
-          ),
+      # Header with help button
+      fluidRow(
+        column(10, h3("Let's Prepare Your Data!")),
+        column(2, actionButton("show_help", "Help", icon = icon("question-circle"),
+                               class = "btn-default", style = "margin-top: 15px;"))
+      ),
+      p("Upload your data and chat with me about what you'd like to do."),
 
-          # Data preview section
-          div(style = "margin-top: 20px;",
-              h4("Your Data"),
-              DTOutput("data_table")
-          )
-        ),
-        tabPanel(
-          "Help",
-          h3("About CREDIBLE Data Wrangler"),
-          h4("What This Tool Does"),
-          p("This tool helps you prepare messy data for analysis through three main operations:"),
-          tags$ul(
-            tags$li(tags$b("Pivoting:"), " Converting data from wide format (many columns) to long format (fewer columns, more rows)"),
-            tags$li(tags$b("Grouping & Summarizing:"), " Combining rows based on common values and calculating summaries"),
-            tags$li(tags$b("Joining:"), " Combining multiple datasets based on shared information")
-          ),
-          h4("How to Use"),
-          tags$ol(
-            tags$li("Upload your data file (the API key is already configured)"),
-            tags$li("Chat with the assistant about what you want to do"),
-            tags$li("Review the data preview as you work"),
-            tags$li("Confirm each step before proceeding"),
-            tags$li("Download your cleaned data when finished")
-          ),
-          h4("Tips"),
-          tags$ul(
-            tags$li("Be specific about what you want to accomplish"),
-            tags$li("Watch the data preview update after each step"),
-            tags$li("Ask questions if you don't understand a step"),
-            tags$li("You can always say 'no' to skip a suggested transformation")
-          ),
-          hr(),
-          div(style = "background-color: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db;",
-              h4(style = "margin-top: 0;", "Questions or Issues?"),
-              p("If you have any questions or encounter any problems, please email us at:"),
-              p(tags$b("projectcredible@utk.edu")),
-              p("We're here to help!")
-          )
-        ),
-        tabPanel(
-          "Step History",
-          h3("Data Preparation Steps Completed"),
-          uiOutput("step_history")
+      # Chat section
+      div(class = "chat-container", id = "chat_box", uiOutput("chat_display")),
+      fluidRow(
+        column(10, textAreaInput("user_input", NULL, placeholder = "Type your message here...", width = "100%", rows = 2, resize = "vertical")),
+        column(2, actionButton("send_btn", "Send", class = "btn-primary", width = "100%"))
+      ),
+      div(style = "margin-top: 10px;",
+          uiOutput("prompt_suggestions")
+      ),
+
+      # Data preview section
+      div(style = "margin-top: 20px;",
+          h4("Your Data"),
+          DTOutput("data_table")
+      ),
+
+      # Step history (collapsible)
+      tags$details(
+        style = "margin-top: 20px;",
+        tags$summary(style = "cursor: pointer; color: #6c757d;", "View completed steps"),
+        div(style = "padding: 10px 0;",
+            uiOutput("step_history")
         )
       )
     )
@@ -822,26 +754,6 @@ server <- function(input, output, session) {
     datatable(rv$current_data, options = list(pageLength = 10, scrollX = TRUE))
   })
   
-  # Render data summary
-  output$data_summary <- renderPrint({
-    req(rv$current_data)
-    skimr::skim(rv$current_data)
-  })
-  
-  # Render current step
-  output$current_step <- renderText({ rv$current_step })
-  
-  # Render status text
-  output$status_text <- renderText({
-    if (is.null(rv$current_data)) {
-      "No data loaded"
-    } else {
-      paste0("Rows: ", nrow(rv$current_data), "\n",
-             "Columns: ", ncol(rv$current_data), "\n",
-             "Steps completed: ", length(rv$step_history))
-    }
-  })
-  
   # Render step history
   output$step_history <- renderUI({
     if (length(rv$step_history) == 0) return(p("No steps completed yet."))
@@ -857,6 +769,25 @@ server <- function(input, output, session) {
     })
     tagList(step_items)
   })
+
+  # Help modal
+  observeEvent(input$show_help, {
+    showModal(modalDialog(
+      title = "How to Use Data Wrangler",
+      p("This tool helps you prepare messy data for analysis. Here's how:"),
+      tags$ol(
+        tags$li("Upload your data file"),
+        tags$li("Chat with the assistant about what you want to do"),
+        tags$li("Review your data as it updates"),
+        tags$li("Type 'yes' to confirm changes, 'no' to try something else"),
+        tags$li("Download your cleaned data when finished")
+      ),
+      hr(),
+      p(tags$b("Questions?"), " Email us at ", tags$a(href = "mailto:projectcredible@utk.edu", "projectcredible@utk.edu")),
+      easyClose = TRUE,
+      footer = modalButton("Got it!")
+    ))
+  })
   
   # Render prompt suggestions
   output$prompt_suggestions <- renderUI({
@@ -866,11 +797,8 @@ server <- function(input, output, session) {
     }
     
     suggestions <- list(
-      "Convert my weekly measurements to long format",
-      "Clean up inconsistent values in my data",
-      "Calculate average values by group",
-      "Remove rows with missing data",
-      "Create a new calculated column"
+      "Help me understand my data",
+      "Calculate averages by group"
     )
     
     suggestion_buttons <- lapply(seq_along(suggestions), function(i) {
@@ -890,11 +818,8 @@ server <- function(input, output, session) {
   # Handle suggestion clicks
   observe({
     suggestions <- c(
-      "Convert my weekly measurements to long format",
-      "Clean up inconsistent values in my data",
-      "Calculate average values by group",
-      "Remove rows with missing data",
-      "Create a new calculated column"
+      "Help me understand my data",
+      "Calculate averages by group"
     )
 
     lapply(seq_along(suggestions), function(i) {
