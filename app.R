@@ -349,6 +349,75 @@ ui <- fluidPage(
         });
       });
 
+      // === CODAP IMPORT FUNCTIONS ===
+
+      // Get list of all datasets available in CODAP
+      function getAvailableDatasets() {
+        return codapInterface('get', 'dataContextList', {});
+      }
+
+      // Import a specific dataset from CODAP
+      function importDataFromCODAP(datasetName) {
+        console.log('Importing dataset from CODAP:', datasetName);
+
+        // First get the dataset structure to understand columns
+        return codapInterface('get', 'dataContext[' + datasetName + ']', {})
+          .then(function(contextResponse) {
+            console.log('Dataset structure:', contextResponse);
+
+            // Then get all the data rows
+            return codapInterface('get', 'dataContext[' + datasetName + '].item', {})
+              .then(function(casesResponse) {
+                console.log('Retrieved', casesResponse.values.length, 'cases');
+
+                // Send to R/Shiny
+                Shiny.setInputValue('codap_imported_data', {
+                  datasetName: datasetName,
+                  cases: casesResponse.values,
+                  timestamp: new Date().getTime()
+                }, {priority: 'event'});
+
+                return casesResponse.values;
+              });
+          });
+      }
+
+      // Handler: Request available datasets from CODAP
+      Shiny.addCustomMessageHandler('requestCODAPDatasets', function(payload) {
+        console.log('Requesting available datasets from CODAP...');
+
+        getAvailableDatasets()
+          .then(function(response) {
+            console.log('Available datasets:', response.values);
+            Shiny.setInputValue('codap_available_datasets', {
+              datasets: response.values || [],
+              timestamp: new Date().getTime()
+            }, {priority: 'event'});
+          })
+          .catch(function(error) {
+            console.error('Error getting datasets:', error);
+            Shiny.setInputValue('codap_available_datasets', {
+              datasets: [],
+              error: error.message || 'Failed to get datasets',
+              timestamp: new Date().getTime()
+            }, {priority: 'event'});
+          });
+      });
+
+      // Handler: Import a specific dataset from CODAP
+      Shiny.addCustomMessageHandler('importFromCODAP', function(payload) {
+        console.log('Import request for dataset:', payload.datasetName);
+
+        importDataFromCODAP(payload.datasetName)
+          .catch(function(error) {
+            console.error('Error importing dataset:', error);
+            Shiny.setInputValue('codap_import_error', {
+              message: error.message || 'Failed to import dataset',
+              timestamp: new Date().getTime()
+            }, {priority: 'event'});
+          });
+      });
+
       console.log('CODAP interface initialized');
     "))
   ),
@@ -361,7 +430,26 @@ ui <- fluidPage(
       # File Upload
       fileInput("data_file", "Upload Data File",
                 accept = c(".csv", ".xlsx", ".tsv", ".txt")),
-      
+
+      # CODAP Import Section
+      div(style = "background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;",
+          div(style = "display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;",
+              span(style = "font-size: 13px; color: #495057;", "Or import from CODAP:"),
+              actionButton("refresh_codap_datasets", NULL,
+                           icon = icon("sync"),
+                           class = "btn-sm",
+                           style = "padding: 2px 8px; font-size: 11px;",
+                           title = "Refresh dataset list")
+          ),
+          selectInput("codap_dataset_select", NULL,
+                      choices = c("(Click refresh to load)" = ""),
+                      width = "100%"),
+          actionButton("import_from_codap", "Import Selected",
+                       class = "btn-primary",
+                       style = "width: 100%; font-size: 13px;",
+                       icon = icon("download"))
+      ),
+
       # Example dataset button (archived for now)
       # actionButton("load_example", "Or Try Example Dataset",
       #              class = "btn-primary",
@@ -372,13 +460,19 @@ ui <- fluidPage(
       verbatimTextOutput("status_text"),
       hr(),
       downloadButton("download_data", "Download Cleaned Data", class = "btn-primary"),
-      hr(),
-      h4("CODAP Integration"),
-      textInput("codap_dataset_name", "Dataset Name:", value = "WrangledData"),
-      actionButton("send_to_codap", "Send to CODAP",
-                   class = "btn-primary",
-                   style = "width: 100%;",
-                   icon = icon("share")),
+      # Advanced section (collapsible)
+      tags$details(
+        style = "margin-top: 15px;",
+        tags$summary(style = "cursor: pointer; color: #6c757d; font-size: 13px;", "Advanced Options"),
+        div(style = "padding: 10px 0;",
+          h5("CODAP Integration", style = "font-size: 14px; margin-top: 10px;"),
+          textInput("codap_dataset_name", "Dataset Name:", value = "WrangledData"),
+          actionButton("send_to_codap", "Send to CODAP",
+                       class = "btn-primary",
+                       style = "width: 100%; font-size: 13px;",
+                       icon = icon("share"))
+        )
+      ),
 
       # Logo footer
       div(style = "text-align: center; padding: 20px 0 10px 0; margin-top: 20px;",
@@ -398,26 +492,20 @@ ui <- fluidPage(
           h3("Let's Prepare Your Data!"),
           p("Upload your data file and tell me what you'd like to do with it. 
             I'll help you clean and prepare it step by step."),
+          # Chat section
+          div(class = "chat-container", id = "chat_box", uiOutput("chat_display")),
           fluidRow(
-            column(6,
-                   h4("Chat with Assistant"),
-                   div(class = "chat-container", id = "chat_box", uiOutput("chat_display")),
-                   fluidRow(
-                     column(10, textAreaInput("user_input", NULL, placeholder = "Type your message here...", width = "100%", rows = 3, resize = "vertical")),
-                     column(2, actionButton("send_btn", "Send", class = "btn-primary", width = "100%"))
-                   ),
-                   div(style = "margin-top: 10px;",
-                       uiOutput("prompt_suggestions")
-                   )
-            ),
-            column(6,
-                   h4("Data Preview"),
-                   div(class = "step-indicator", textOutput("current_step")),
-                   DTOutput("data_table"),
-                   hr(),
-                   h5("Quick Summary"),
-                   verbatimTextOutput("data_summary")
-            )
+            column(10, textAreaInput("user_input", NULL, placeholder = "Type your message here...", width = "100%", rows = 2, resize = "vertical")),
+            column(2, actionButton("send_btn", "Send", class = "btn-primary", width = "100%"))
+          ),
+          div(style = "margin-top: 10px;",
+              uiOutput("prompt_suggestions")
+          ),
+
+          # Data preview section
+          div(style = "margin-top: 20px;",
+              h4("Your Data"),
+              DTOutput("data_table")
           )
         ),
         tabPanel(
@@ -886,6 +974,141 @@ server <- function(input, output, session) {
         )
       }
     }
+  })
+
+  # CODAP Integration: Request available datasets from CODAP
+  observeEvent(input$refresh_codap_datasets, {
+    showNotification("Requesting datasets from CODAP...", type = "message", duration = 2)
+    session$sendCustomMessage(type = "requestCODAPDatasets", message = list())
+  })
+
+  # CODAP Integration: Handle received dataset list from CODAP
+  observeEvent(input$codap_available_datasets, {
+    response <- input$codap_available_datasets
+
+    if (!is.null(response$error)) {
+      showNotification(
+        paste("Could not get CODAP datasets:", response$error),
+        type = "warning",
+        duration = 5
+      )
+      updateSelectInput(session, "codap_dataset_select",
+                        choices = c("(Not connected to CODAP)" = ""))
+      return()
+    }
+
+    datasets <- response$datasets
+    if (length(datasets) == 0) {
+      showNotification("No datasets found in CODAP.", type = "warning", duration = 3)
+      updateSelectInput(session, "codap_dataset_select",
+                        choices = c("(No datasets available)" = ""))
+      return()
+    }
+
+    # Build choices from dataset list
+    choices <- setNames(
+      sapply(datasets, function(d) d$name),
+      sapply(datasets, function(d) d$title %||% d$name)
+    )
+
+    updateSelectInput(session, "codap_dataset_select", choices = choices)
+    showNotification(
+      paste("Found", length(datasets), "dataset(s) in CODAP"),
+      type = "message",
+      duration = 3
+    )
+  })
+
+  # CODAP Integration: Import selected dataset from CODAP
+  observeEvent(input$import_from_codap, {
+    dataset_name <- input$codap_dataset_select
+
+    if (is.null(dataset_name) || dataset_name == "") {
+      showNotification("Please select a dataset first. Click refresh to load available datasets.",
+                       type = "warning")
+      return()
+    }
+
+    showNotification(
+      paste("Importing dataset:", dataset_name),
+      type = "message",
+      duration = 2
+    )
+
+    session$sendCustomMessage(
+      type = "importFromCODAP",
+      message = list(datasetName = dataset_name)
+    )
+  })
+
+  # CODAP Integration: Handle imported data from CODAP
+  observeEvent(input$codap_imported_data, {
+    data <- input$codap_imported_data
+
+    if (is.null(data$cases) || length(data$cases) == 0) {
+      showNotification("No data found in the selected dataset.", type = "warning")
+      return()
+    }
+
+    tryCatch({
+      # Convert list of cases to data frame
+      # Each case has a 'values' field containing the actual data
+      case_values <- lapply(data$cases, function(case) {
+        if (!is.null(case$values)) {
+          return(case$values)
+        } else {
+          return(case)
+        }
+      })
+
+      df <- bind_rows(lapply(case_values, function(row) {
+        # Convert NULL to NA for proper data frame handling
+        row <- lapply(row, function(x) if (is.null(x)) NA else x)
+        as.data.frame(row, stringsAsFactors = FALSE)
+      }))
+
+      rv$original_data <- df
+      rv$current_data <- df
+      rv$current_step <- paste("Imported from CODAP:", data$datasetName)
+      rv$step_history <- list()
+      rv$conversation_history <- list()
+      rv$awaiting_confirmation <- FALSE
+      rv$pending_code <- NULL
+
+      rv$chat_history <- list(
+        list(role = "assistant",
+             content = paste0("I've imported the **", data$datasetName, "** dataset from CODAP. ",
+                              "It has ", nrow(df), " rows and ", ncol(df), " columns.\n\n",
+                              "**Columns:** ", paste(names(df), collapse = ", "), "\n\n",
+                              "What would you like to do with this data?"))
+      )
+
+      showNotification(
+        paste("Successfully imported", nrow(df), "rows from CODAP"),
+        type = "message",
+        duration = 5
+      )
+    }, error = function(e) {
+      showNotification(
+        paste("Error processing imported data:", e$message),
+        type = "error",
+        duration = 10
+      )
+    })
+  })
+
+  # CODAP Integration: Handle import errors
+  observeEvent(input$codap_import_error, {
+    error <- input$codap_import_error
+    showNotification(
+      HTML(paste0(
+        "CODAP Import Error: ", error$message,
+        "<br><br><strong>Tip:</strong> Make sure this app is embedded in CODAP and ",
+        "that the selected dataset exists."
+      )),
+      type = "error",
+      duration = 10
+    )
   })
 }
 
